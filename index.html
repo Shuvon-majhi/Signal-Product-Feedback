@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signal - Product Feedback Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .hover-lift { transition: all 0.2s; }
+        .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        
+        /* Neon glow effect for Send Summary button */
+        .neon-glow {
+            position: relative;
+            background: linear-gradient(45deg, #00ffff, #0080ff);
+            box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff, 0 0 40px #0080ff;
+            animation: neon-pulse 2s infinite alternate;
+        }
+        
+        @keyframes neon-pulse {
+            0% { box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff, 0 0 40px #0080ff; }
+            100% { box-shadow: 0 0 15px #00ffff, 0 0 25px #00ffff, 0 0 35px #00ffff, 0 0 50px #0080ff; }
+        }
+        
+        /* Better spacing for feedback items */
+        .feedback-item {
+            padding: 1.5rem;
+            margin: 0.5rem;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+        }
+        
+        .feedback-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.15);
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Glass effect for feedback list container */
+        #feedbackList {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(5px);
+            border-radius: 0.75rem;
+            padding: 0.5rem;
+        }
+        
+        /* Pagination button styles */
+        .page-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .page-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .page-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="app" class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center space-x-3">
+                        <i data-lucide="activity" class="w-8 h-8 text-blue-600"></i>
+                        <h1 class="text-xl font-bold text-gray-900">Signal</h1>
+                        <span class="text-sm text-gray-500">Product Feedback Analysis</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span id="feedbackCount" class="text-sm text-gray-600">0 feedback items</span>
+                        <button onclick="showIngestionModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span>Add Feedback</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Filters -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+                <div class="flex flex-wrap gap-4 items-center">
+                    <div class="flex items-center space-x-2">
+                        <label class="text-sm font-medium text-gray-700">Source:</label>
+                        <select id="sourceFilter" onchange="applyFilters()" class="border border-gray-300 rounded-md px-3 py-1 text-sm">
+                            <option value="">All Sources</option>
+                            <option value="Support">Support</option>
+                            <option value="GitHub">GitHub</option>
+                            <option value="Discord">Discord</option>
+                            <option value="Twitter">Twitter</option>
+                            <option value="Email">Email</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label class="text-sm font-medium text-gray-700">Sentiment:</label>
+                        <select id="sentimentFilter" onchange="applyFilters()" class="border border-gray-300 rounded-md px-3 py-1 text-sm">
+                            <option value="">All Sentiments</option>
+                            <option value="Positive">Positive</option>
+                            <option value="Neutral">Neutral</option>
+                            <option value="Negative">Negative</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label class="text-sm font-medium text-gray-700">Theme:</label>
+                        <select id="themeFilter" onchange="applyFilters()" class="border border-gray-300 rounded-md px-3 py-1 text-sm">
+                            <option value="">All Themes</option>
+                        </select>
+                    </div>
+                    <button onclick="clearFilters()" class="text-sm text-gray-500 hover:text-gray-700">Clear Filters</button>
+                </div>
+            </div>
+
+            <!-- Insights Dashboard -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Top Themes -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-lucide="trending-up" class="w-5 h-5 mr-2 text-blue-600"></i>
+                        Top 5 Themes
+                    </h3>
+                    <div id="topThemes" class="space-y-3">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Urgent Feedback -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-lucide="alert-triangle" class="w-5 h-5 mr-2 text-red-600"></i>
+                        Most Urgent This Week
+                    </h3>
+                    <div id="urgentFeedback" class="space-y-3">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Negative Sentiment Hotspots -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-lucide="frown" class="w-5 h-5 mr-2 text-orange-600"></i>
+                        Negative Sentiment by Source
+                    </h3>
+                    <div id="sentimentHotspots" class="space-y-3">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- What Should We Work On Next? -->
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-6 mb-8 text-white">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-xl font-bold flex items-center">
+                        <i data-lucide="lightbulb" class="w-6 h-6 mr-2"></i>
+                        What Should We Work On Next?
+                    </h3>
+                    <button onclick="showDeliveryModal()" class="neon-glow relative bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-6 py-3 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        <div class="relative flex items-center space-x-2">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                            <span>Send Summary</span>
+                        </div>
+                    </button>
+                </div>
+                <div id="recommendations" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Feedback List -->
+            <div class="bg-white bg-opacity-50 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200 border-opacity-30">
+                <div class="px-6 py-4 border-b border-gray-200 border-opacity-30 flex justify-between items-center bg-white bg-opacity-30 backdrop-blur-sm rounded-t-lg">
+                    <h3 class="text-lg font-semibold text-gray-900">All Feedback</h3>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-600">
+                            Showing <span id="showingStart">1</span>-<span id="showingEnd">10</span> of <span id="totalItems">0</span>
+                        </span>
+                        <select id="itemsPerPage" onchange="updatePagination()" class="border border-gray-300 border-opacity-50 bg-white bg-opacity-70 backdrop-blur-sm rounded-md px-3 py-1 text-sm">
+                            <option value="5">5 per page</option>
+                            <option value="10" selected>10 per page</option>
+                            <option value="20">20 per page</option>
+                            <option value="50">50 per page</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="feedbackList" class="divide-y divide-gray-200 divide-opacity-30">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+                <!-- Pagination Controls -->
+                <div id="paginationControls" class="px-6 py-4 border-t border-gray-200 border-opacity-30 flex justify-between items-center bg-white bg-opacity-30 backdrop-blur-sm rounded-b-lg">
+                    <div class="flex space-x-2">
+                        <button id="prevPage" onclick="changePage(-1)" class="page-btn px-3 py-1 border border-gray-300 border-opacity-50 bg-white bg-opacity-70 backdrop-blur-sm rounded-md text-sm hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Previous
+                        </button>
+                        <div id="pageNumbers" class="flex space-x-1">
+                            <!-- Page numbers will be populated by JavaScript -->
+                        </div>
+                        <button id="nextPage" onclick="changePage(1)" class="page-btn px-3 py-1 border border-gray-300 border-opacity-50 bg-white bg-opacity-70 backdrop-blur-sm rounded-md text-sm hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Next
+                        </button>
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Ingestion Modal -->
+    <div id="ingestionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-gray-900">Add Feedback</h3>
+                <button onclick="hideIngestionModal()" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <!-- Tab Navigation -->
+                <div class="flex space-x-4 mb-6 border-b border-gray-200">
+                    <button onclick="switchTab('manual')" id="manualTab" class="pb-2 px-1 border-b-2 border-blue-600 text-blue-600 font-medium">Manual Entry</button>
+                    <button onclick="switchTab('csv')" id="csvTab" class="pb-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">CSV Upload</button>
+                </div>
+
+                <!-- Manual Entry Form -->
+                <div id="manualForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Source</label>
+                        <select id="manualSource" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                            <option value="Support">Support</option>
+                            <option value="GitHub">GitHub</option>
+                            <option value="Discord">Discord</option>
+                            <option value="Twitter">Twitter</option>
+                            <option value="Email">Email</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Customer Type</label>
+                        <select id="manualCustomerType" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                            <option value="Enterprise">Enterprise</option>
+                            <option value="Mid-Market">Mid-Market</option>
+                            <option value="Small Business">Small Business</option>
+                            <option value="Individual">Individual</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Feedback Message</label>
+                        <textarea id="manualMessage" rows="4" class="w-full border border-gray-300 rounded-md px-3 py-2" placeholder="Enter the feedback message..."></textarea>
+                    </div>
+                    <button onclick="addManualFeedback()" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors">
+                        Add Feedback
+                    </button>
+                </div>
+
+                <!-- CSV Upload Form -->
+                <div id="csvForm" class="hidden space-y-4">
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                        <i data-lucide="upload" class="w-12 h-12 mx-auto text-gray-400 mb-3"></i>
+                        <p class="text-sm text-gray-600 mb-2">Drop CSV file here or click to browse</p>
+                        <input type="file" id="csvFile" accept=".csv" class="hidden" onchange="handleCSVUpload(event)">
+                        <button onclick="document.getElementById('csvFile').click()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors">
+                            Choose File
+                        </button>
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        <p class="font-medium mb-2">CSV Format:</p>
+                        <code class="bg-gray-100 px-2 py-1 rounded">source,message,customer_type</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delivery Modal -->
+    <div id="deliveryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-gray-900">Send Summary</h3>
+                <button onclick="hideDeliveryModal()" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <p class="text-gray-600 mb-6">Choose where to send the insights summary:</p>
+                
+                <div class="space-y-3">
+                    <button onclick="sendToSlack()" class="w-full flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i data-lucide="message-square" class="w-5 h-5 text-purple-600"></i>
+                            </div>
+                            <div class="text-left">
+                                <p class="font-medium text-gray-900">Slack</p>
+                                <p class="text-sm text-gray-500">Send to #product-team</p>
+                            </div>
+                        </div>
+                        <i data-lucide="arrow-right" class="w-4 h-4 text-gray-400"></i>
+                    </button>
+                    
+                    <button onclick="sendToDiscord()" class="w-full flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i data-lucide="discord" class="w-5 h-5 text-blue-600"></i>
+                            </div>
+                            <div class="text-left">
+                                <p class="font-medium text-gray-900">Discord</p>
+                                <p class="text-sm text-gray-500">Send to #feedback-insights</p>
+                            </div>
+                        </div>
+                        <i data-lucide="arrow-right" class="w-4 h-4 text-gray-400"></i>
+                    </button>
+                </div>
+                
+                <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600">
+                        <strong>Preview:</strong> Summary includes top themes, urgent items, and priority recommendations.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
