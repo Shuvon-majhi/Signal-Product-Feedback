@@ -118,12 +118,17 @@ let filteredData = [];
 let currentPage = 1;
 let itemsPerPage = 10;
 
+// Chart instances
+let sentimentTrendChart = null;
+let themeDistributionChart = null;
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
     lucide.createIcons();
     loadMockData();
     updateDashboard();
     updateThemeFilter();
+    initializeCharts();
 });
 
 // Load mock data
@@ -290,6 +295,415 @@ function updateDashboard() {
     updateRecommendations();
     updateFeedbackList();
     updatePagination();
+    updateFeedbackGrid();
+    updateCharts();
+}
+
+// Chart Functions
+function initializeCharts() {
+    // Add loading states to chart containers
+    document.querySelectorAll('.chart-container').forEach(container => {
+        container.classList.add('loading');
+    });
+    
+    initializeSentimentTrendChart();
+    initializeThemeDistributionChart();
+}
+
+function initializeSentimentTrendChart() {
+    const ctx = document.getElementById('sentimentTrendChart').getContext('2d');
+    sentimentTrendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'Positive',
+                    data: [],
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: 'rgb(34, 197, 94)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                },
+                {
+                    label: 'Neutral',
+                    data: [],
+                    borderColor: 'rgb(250, 204, 21)',
+                    backgroundColor: 'rgba(250, 204, 21, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: 'rgb(250, 204, 21)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                },
+                {
+                    label: 'Negative',
+                    data: [],
+                    borderColor: 'rgb(239, 68, 68)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: 'rgb(239, 68, 68)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart',
+                onComplete: function() {
+                    // Add pulse effect to chart container
+                    const container = document.getElementById('sentimentTrendChart').closest('.chart-container');
+                    container.classList.remove('loading');
+                }
+            },
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 15,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#ddd',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y + ' items';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        font: {
+                            size: 11
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: 11
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function initializeThemeDistributionChart() {
+    const ctx = document.getElementById('themeDistributionChart').getContext('2d');
+    themeDistributionChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Feedback Count',
+                data: [],
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.8)',
+                    'rgba(147, 51, 234, 0.8)',
+                    'rgba(236, 72, 153, 0.8)',
+                    'rgba(34, 197, 94, 0.8)',
+                    'rgba(250, 204, 21, 0.8)',
+                    'rgba(251, 146, 60, 0.8)',
+                    'rgba(239, 68, 68, 0.8)',
+                    'rgba(107, 114, 128, 0.8)'
+                ],
+                borderColor: [
+                    'rgb(59, 130, 246)',
+                    'rgb(147, 51, 234)',
+                    'rgb(236, 72, 153)',
+                    'rgb(34, 197, 94)',
+                    'rgb(250, 204, 21)',
+                    'rgb(251, 146, 60)',
+                    'rgb(239, 68, 68)',
+                    'rgb(107, 114, 128)'
+                ],
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 1200,
+                easing: 'easeOutBounce',
+                onComplete: function() {
+                    const container = document.getElementById('themeDistributionChart').closest('.chart-container');
+                    container.classList.remove('loading');
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#ddd',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return 'Count: ' + context.parsed.y + ' items';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        font: {
+                            size: 11
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: 11
+                        },
+                        maxRotation: 45,
+                        minRotation: 45
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+function initializeHeatMapChart() {
+    const ctx = document.getElementById('heatMapChart').getContext('2d');
+    
+    // Create heat map data
+    const sources = ['Support', 'GitHub', 'Discord', 'Twitter', 'Email'];
+    const themes = ['Performance', 'UX', 'Pricing', 'Reliability', 'Docs', 'Features', 'Integration', 'Security'];
+    
+    heatMapChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Feedback Intensity',
+                data: [],
+                backgroundColor: function(context) {
+                    const value = context.parsed.v;
+                    const alpha = Math.min(value / 10, 1);
+                    return `rgba(147, 51, 234, ${alpha})`;
+                },
+                borderColor: 'rgba(147, 51, 234, 0.8)',
+                borderWidth: 2,
+                pointRadius: function(context) {
+                    const value = context.parsed.v;
+                    return Math.max(10, Math.min(25, value * 2));
+                },
+                pointHoverRadius: function(context) {
+                    const value = context.parsed.v;
+                    return Math.max(15, Math.min(30, value * 2.5));
+                },
+                pointStyle: 'rect'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 1500,
+                easing: 'easeInOutQuart',
+                onComplete: function() {
+                    const container = document.getElementById('heatMapChart').closest('.chart-container');
+                    container.classList.remove('loading');
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#ddd',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    callbacks: {
+                        title: function(context) {
+                            const source = sources[context[0].parsed.x];
+                            const theme = themes[context[0].parsed.y];
+                            return `${source} → ${theme}`;
+                        },
+                        label: function(context) {
+                            const value = context.parsed.v;
+                            return `Feedback Count: ${value} items`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    min: -0.5,
+                    max: sources.length - 0.5,
+                    ticks: {
+                        callback: function(value) {
+                            return sources[Math.round(value)] || '';
+                        },
+                        stepSize: 1,
+                        font: {
+                            size: 11,
+                            weight: 'bold'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Source',
+                        font: {
+                            size: 12,
+                            weight: 'bold'
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    min: -0.5,
+                    max: themes.length - 0.5,
+                    ticks: {
+                        callback: function(value) {
+                            return themes[Math.round(value)] || '';
+                        },
+                        stepSize: 1,
+                        font: {
+                            size: 11,
+                            weight: 'bold'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Theme',
+                        font: {
+                            size: 12,
+                            weight: 'bold'
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                v: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+function updateCharts() {
+    updateSentimentTrendChart();
+    updateThemeDistributionChart();
+}
+
+function updateFeedbackGrid() {
+    const container = document.getElementById('feedbackGrid');
+    const gridData = filteredData.slice(0, 9); // Show max 9 items in grid
+    
+    if (gridData.length === 0) {
+        container.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">No feedback items to display</div>';
+        return;
+    }
+    
+    container.innerHTML = gridData.map((item, index) => {
+        const gradientClass = item.analysis.sentiment === 'Positive' ? 'gradient-positive' : 
+                              item.analysis.sentiment === 'Negative' ? 'gradient-negative' : 'gradient-neutral';
+        
+        return `
+            <div class="feedback-grid-item ${gradientClass} p-4 cursor-pointer" 
+                 onclick="viewFeedback('${item.id}')" 
+                 style="animation-delay: ${index * 0.1}s">
+                <div class="flex items-start justify-between mb-3">
+                    <span class="grid-badge px-2 py-1 rounded-full text-xs font-medium ${getSourceColor(item.source)}">
+                        ${item.source}
+                    </span>
+                    <span class="grid-badge px-2 py-1 rounded-full text-xs font-medium ${getImpactColor(item.analysis.impact)}">
+                        ${item.customerType}
+                    </span>
+                </div>
+                <h4 class="font-semibold text-sm mb-2 line-clamp-2">${item.analysis.theme}</h4>
+                <p class="text-xs opacity-90 mb-3 line-clamp-3">${item.message}</p>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="grid-badge px-2 py-1 rounded text-xs ${getSentimentColor(item.analysis.sentiment)}">
+                            ${item.analysis.sentiment}
+                        </span>
+                        <span class="grid-badge px-2 py-1 rounded text-xs ${getUrgencyColor(item.analysis.urgency)}">
+                            U: ${item.analysis.urgency}/5
+                        </span>
+                    </div>
+                    <span class="text-xs opacity-75 grid-badge px-2 py-1 rounded bg-gradient-to-r from-gray-400 to-gray-500 text-white">${formatDate(item.timestamp)}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    // Add staggered animation
+    container.querySelectorAll('.feedback-grid-item').forEach((item, index) => {
+        item.style.animation = 'slideInUp 0.4s ease-out';
+        item.style.animationDelay = `${index * 0.1}s`;
+        item.style.animationFillMode = 'both';
+    });
 }
 
 function updateFeedbackCount() {
@@ -308,14 +722,21 @@ function updateTopThemes() {
 
     const container = document.getElementById('topThemes');
     container.innerHTML = sortedThemes.map(([theme, count], index) => `
-        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover-lift cursor-pointer" onclick="filterByTheme('${theme}')">
+        <div class="theme-item flex items-center justify-between p-3 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg cursor-pointer" onclick="filterByTheme('${theme}')" style="animation-delay: ${index * 0.1}s">
             <div class="flex items-center space-x-3">
-                <span class="text-lg font-bold text-gray-400">#${index + 1}</span>
-                <span class="font-medium text-gray-900">${theme}</span>
+                <span class="text-lg font-bold text-white number-badge bg-white bg-opacity-30 px-2 py-1 rounded">#${index + 1}</span>
+                <span class="font-medium text-white">${theme}</span>
             </div>
-            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">${count}</span>
+            <span class="bg-white bg-opacity-30 px-3 py-1 rounded-full text-sm font-medium number-badge text-white">${count}</span>
         </div>
     `).join('');
+    
+    // Add staggered animation
+    container.querySelectorAll('.theme-item').forEach((item, index) => {
+        item.style.animation = 'slideInLeft 0.3s ease-out';
+        item.style.animationDelay = `${index * 0.1}s`;
+        item.style.animationFillMode = 'both';
+    });
 }
 
 function updateUrgentFeedback() {
@@ -327,19 +748,26 @@ function updateUrgentFeedback() {
 
     const container = document.getElementById('urgentFeedback');
     if (urgentThisWeek.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 text-sm">No urgent feedback this week</p>';
+        container.innerHTML = '<p class="text-white text-sm opacity-80">No urgent feedback this week</p>';
     } else {
-        container.innerHTML = urgentThisWeek.map(item => `
-            <div class="p-3 bg-red-50 border border-red-200 rounded-lg hover-lift cursor-pointer" onclick="viewFeedback('${item.id}')">
+        container.innerHTML = urgentThisWeek.map((item, index) => `
+            <div class="urgent-item p-3 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg cursor-pointer" onclick="viewFeedback('${item.id}')" style="animation-delay: ${index * 0.1}s">
                 <div class="flex items-start justify-between mb-2">
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white bg-opacity-30 number-badge text-white">
                         Urgency: ${item.analysis.urgency}/5
                     </span>
-                    <span class="text-xs text-gray-500">${item.source}</span>
+                    <span class="text-xs text-white bg-white bg-opacity-30 px-2 py-1 rounded">${item.source}</span>
                 </div>
-                <p class="text-sm text-gray-700 line-clamp-2">${item.message}</p>
+                <p class="text-sm text-white opacity-90 line-clamp-2">${item.message}</p>
             </div>
         `).join('');
+        
+        // Add staggered animation
+        container.querySelectorAll('.urgent-item').forEach((item, index) => {
+            item.style.animation = 'slideInLeft 0.3s ease-out';
+            item.style.animationDelay = `${index * 0.1}s`;
+            item.style.animationFillMode = 'both';
+        });
     }
 }
 
@@ -365,23 +793,30 @@ function updateSentimentHotspots() {
 
     const container = document.getElementById('sentimentHotspots');
     if (hotspots.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 text-sm">No negative sentiment detected</p>';
+        container.innerHTML = '<p class="text-white text-sm opacity-80">No negative sentiment detected</p>';
     } else {
-        container.innerHTML = hotspots.map(hotspot => `
-            <div class="p-3 bg-orange-50 border border-orange-200 rounded-lg hover-lift cursor-pointer" onclick="filterBySourceAndSentiment('${hotspot.source}', 'Negative')">
+        container.innerHTML = hotspots.map((hotspot, index) => `
+            <div class="sentiment-item p-3 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg cursor-pointer" onclick="filterBySourceAndSentiment('${hotspot.source}', 'Negative')" style="animation-delay: ${index * 0.1}s">
                 <div class="flex items-center justify-between mb-2">
-                    <span class="font-medium text-gray-900">${hotspot.source}</span>
-                    <span class="text-xs text-gray-500">${hotspot.total} total</span>
+                    <span class="font-medium text-white">${hotspot.source}</span>
+                    <span class="text-xs text-white bg-white bg-opacity-30 px-2 py-1 rounded">${hotspot.total} total</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <div class="flex-1 bg-gray-200 rounded-full h-2">
-                        <div class="bg-orange-500 h-2 rounded-full" style="width: ${hotspot.negativePercentage}%"></div>
+                    <div class="flex-1 bg-white bg-opacity-30 rounded-full h-2">
+                        <div class="bg-white h-2 rounded-full progress-bar" style="width: ${hotspot.negativePercentage}%"></div>
                     </div>
-                    <span class="text-sm font-medium text-orange-800">${hotspot.negativePercentage}%</span>
+                    <span class="text-sm font-medium text-white number-badge bg-white bg-opacity-30 px-2 py-1 rounded">${hotspot.negativePercentage}%</span>
                 </div>
-                <p class="text-xs text-gray-600 mt-1">${hotspot.negativeCount} negative items</p>
+                <p class="text-xs text-white opacity-90 mt-1">${hotspot.negativeCount} negative items</p>
             </div>
         `).join('');
+        
+        // Add staggered animation
+        container.querySelectorAll('.sentiment-item').forEach((item, index) => {
+            item.style.animation = 'slideInLeft 0.3s ease-out';
+            item.style.animationDelay = `${index * 0.1}s`;
+            item.style.animationFillMode = 'both';
+        });
     }
 }
 
@@ -462,32 +897,50 @@ function updateFeedbackList() {
         return;
     }
 
-    container.innerHTML = paginatedData.map(item => `
-        <div class="feedback-item hover:bg-gray-50 cursor-pointer" onclick="viewFeedback('${item.id}')">
-            <div class="flex items-start justify-between mb-3">
-                <div class="flex items-center space-x-3">
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getSourceColor(item.source)}">
-                        ${item.source}
-                    </span>
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getSentimentColor(item.analysis.sentiment)}">
-                        ${item.analysis.sentiment}
-                    </span>
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        ${item.analysis.theme}
-                    </span>
+    container.innerHTML = paginatedData.map((item, index) => {
+        const gradientClass = item.analysis.sentiment === 'Positive' ? 'list-gradient-positive' : 
+                              item.analysis.sentiment === 'Negative' ? 'list-gradient-negative' : 'list-gradient-neutral';
+        
+        return `
+            <div class="feedback-list-item ${gradientClass} p-4 cursor-pointer" 
+                 onclick="viewFeedback('${item.id}')" 
+                 style="animation-delay: ${index * 0.05}s">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="list-badge px-2 py-1 rounded-full text-xs font-medium ${getSourceColor(item.source)}">
+                            ${item.source}
+                        </span>
+                        <span class="list-badge px-2 py-1 rounded-full text-xs font-medium ${getSentimentColor(item.analysis.sentiment)}">
+                            ${item.analysis.sentiment}
+                        </span>
+                        <span class="list-badge px-2 py-1 rounded-full text-xs font-medium ${getThemeColor(item.analysis.theme)}">
+                            ${item.analysis.theme}
+                        </span>
+                    </div>
+                    <div class="flex items-center space-x-2 text-xs text-gray-600">
+                        <span class="list-badge px-2 py-1 rounded ${getUrgencyColor(item.analysis.urgency)}">
+                            U: ${item.analysis.urgency}/5
+                        </span>
+                        <span class="list-badge px-2 py-1 rounded ${getImpactColor(item.analysis.impact)}">
+                            ${item.analysis.impact}
+                        </span>
+                    </div>
                 </div>
-                <div class="flex items-center space-x-2 text-xs text-gray-500">
-                    <span>Urgency: ${item.analysis.urgency}/5</span>
-                    <span>Impact: ${item.analysis.impact}</span>
+                <p class="text-gray-700 mb-3 leading-relaxed">${item.message}</p>
+                <div class="flex items-center justify-between">
+                    <p class="text-sm text-gray-600 italic">${item.analysis.summary}</p>
+                    <span class="text-xs text-gray-500 list-badge px-2 py-1 rounded bg-gradient-to-r from-gray-400 to-gray-500 text-white">${formatDate(item.timestamp)}</span>
                 </div>
             </div>
-            <p class="text-gray-700 mb-3 leading-relaxed">${item.message}</p>
-            <div class="flex items-center justify-between">
-                <p class="text-sm text-gray-600 italic">${item.analysis.summary}</p>
-                <span class="text-xs text-gray-500">${formatDate(item.timestamp)}</span>
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
+    
+    // Add staggered animation
+    container.querySelectorAll('.feedback-list-item').forEach((item, index) => {
+        item.style.animation = 'slideInLeft 0.3s ease-out';
+        item.style.animationDelay = `${index * 0.05}s`;
+        item.style.animationFillMode = 'both';
+    });
 }
 
 // Pagination Functions
@@ -580,22 +1033,52 @@ function updatePaginationSettings() {
 // Helper Functions
 function getSourceColor(source) {
     const colors = {
-        'Support': 'bg-blue-100 text-blue-800',
-        'GitHub': 'bg-purple-100 text-purple-800',
-        'Discord': 'bg-indigo-100 text-indigo-800',
-        'Twitter': 'bg-sky-100 text-sky-800',
-        'Email': 'bg-green-100 text-green-800'
+        'Support': 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0',
+        'GitHub': 'bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0',
+        'Discord': 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white border-0',
+        'Twitter': 'bg-gradient-to-r from-sky-500 to-sky-600 text-white border-0',
+        'Email': 'bg-gradient-to-r from-green-500 to-green-600 text-white border-0'
     };
-    return colors[source] || 'bg-gray-100 text-gray-800';
+    return colors[source] || 'bg-gradient-to-r from-gray-500 to-gray-600 text-white border-0';
 }
 
 function getSentimentColor(sentiment) {
     const colors = {
-        'Positive': 'bg-green-100 text-green-800',
-        'Neutral': 'bg-yellow-100 text-yellow-800',
-        'Negative': 'bg-red-100 text-red-800'
+        'Positive': 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-0',
+        'Neutral': 'bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0',
+        'Negative': 'bg-gradient-to-r from-red-500 to-red-600 text-white border-0'
     };
-    return colors[sentiment] || 'bg-gray-100 text-gray-800';
+    return colors[sentiment] || 'bg-gradient-to-r from-gray-500 to-gray-600 text-white border-0';
+}
+
+function getUrgencyColor(urgency) {
+    if (urgency >= 4) return 'bg-gradient-to-r from-red-500 to-red-600 text-white border-0';
+    if (urgency >= 3) return 'bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0';
+    if (urgency >= 2) return 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border-0';
+    return 'bg-gradient-to-r from-green-500 to-green-600 text-white border-0';
+}
+
+function getImpactColor(impact) {
+    const colors = {
+        'High': 'bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0',
+        'Medium': 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0',
+        'Low': 'bg-gradient-to-r from-gray-500 to-gray-600 text-white border-0'
+    };
+    return colors[impact] || 'bg-gradient-to-r from-gray-500 to-gray-600 text-white border-0';
+}
+
+function getThemeColor(theme) {
+    const colors = {
+        'Performance': 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white border-0',
+        'UX': 'bg-gradient-to-r from-pink-500 to-pink-600 text-white border-0',
+        'Pricing': 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border-0',
+        'Reliability': 'bg-gradient-to-r from-red-500 to-red-600 text-white border-0',
+        'Docs': 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white border-0',
+        'Features': 'bg-gradient-to-r from-green-500 to-green-600 text-white border-0',
+        'Integration': 'bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0',
+        'Security': 'bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0'
+    };
+    return colors[theme] || 'bg-gradient-to-r from-gray-500 to-gray-600 text-white border-0';
 }
 
 function formatDate(date) {

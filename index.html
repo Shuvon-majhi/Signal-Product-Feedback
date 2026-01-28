@@ -6,6 +6,7 @@
     <title>Signal - Product Feedback Analysis</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .fade-in { animation: fadeIn 0.3s ease-in; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -62,10 +63,226 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         
-        .page-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        /* Enhanced chart animations */
+        .chart-container {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .chart-container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        /* Pulse animation for chart containers */
+        @keyframes chartPulse {
+            0% { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+            50% { box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3); }
+            100% { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        }
+        
+        .chart-container.loading {
+            animation: chartPulse 2s infinite;
+        }
+        
+        /* Heat map cell hover effect */
+        .heatmap-cell {
+            transition: all 0.2s ease;
+        }
+        
+        /* Micro animations for insight cards */
+        .insight-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .insight-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .insight-card:hover::before {
+            left: 100%;
+        }
+        
+        .insight-card:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        
+        /* Blur effect on items when container is hovered */
+        .insight-card:hover .theme-item,
+        .insight-card:hover .urgent-item,
+        .insight-card:hover .sentiment-item {
+            backdrop-filter: blur(2px);
+            background: rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .insight-card:hover .theme-item:hover,
+        .insight-card:hover .urgent-item:hover,
+        .insight-card:hover .sentiment-item:hover {
+            backdrop-filter: blur(0px);
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateX(5px) scale(1.02);
+        }
+        
+        .theme-item {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .urgent-item {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .sentiment-item {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        /* Number badge animations */
+        .number-badge {
+            animation: numberPop 0.3s ease-out;
+        }
+        
+        @keyframes numberPop {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes slideInLeft {
+            0% { transform: translateX(-20px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideInUp {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        
+        /* Progress bar animations */
+        .progress-bar {
+            transition: width 0.6s ease-out;
+        }
+        
+        /* Grid View Styles */
+        .feedback-grid-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+        
+        .feedback-grid-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s;
+        }
+        
+        .feedback-grid-item:hover::before {
+            left: 100%;
+        }
+        
+        .feedback-grid-item:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+        
+        .gradient-positive {
+            background: linear-gradient(135deg, #10b981, #34d399, #6ee7b7);
             color: white;
-            border-color: #667eea;
+        }
+        
+        .gradient-neutral {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24, #fcd34d);
+            color: white;
+        }
+        
+        .gradient-negative {
+            background: linear-gradient(135deg, #ef4444, #f87171, #fca5a5);
+            color: white;
+        }
+        
+        .grid-badge {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Feedback List Item Styles */
+        .feedback-list-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+        
+        .feedback-list-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s;
+        }
+        
+        .feedback-list-item:hover::before {
+            left: 100%;
+        }
+        
+        .feedback-list-item:hover {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .list-gradient-positive {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(52, 211, 153, 0.1), rgba(110, 231, 183, 0.1));
+            border-left: 4px solid #10b981;
+        }
+        
+        .list-gradient-neutral {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.1), rgba(252, 211, 77, 0.1));
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .list-gradient-negative {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(248, 113, 113, 0.1), rgba(252, 165, 165, 0.1));
+            border-left: 4px solid #ef4444;
+        }
+        
+        .list-badge {
+            backdrop-filter: blur(5px);
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Loading skeleton for charts */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        
+        .chart-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
         }
     </style>
 </head>
@@ -94,44 +311,46 @@
         <!-- Main Content -->
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- Filters -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-                <div class="flex flex-wrap gap-4 items-center">
-                    <div class="flex items-center space-x-2">
-                        <label class="text-sm font-medium text-gray-700">Source:</label>
-                        <select id="sourceFilter" onchange="applyFilters()" class="border border-gray-300 rounded-md px-3 py-1 text-sm">
-                            <option value="">All Sources</option>
-                            <option value="Support">Support</option>
-                            <option value="GitHub">GitHub</option>
-                            <option value="Discord">Discord</option>
-                            <option value="Twitter">Twitter</option>
-                            <option value="Email">Email</option>
-                        </select>
+            <div class="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-lg shadow-lg p-4 mb-6">
+                <div class="bg-white bg-opacity-90 backdrop-blur-sm rounded-lg p-4">
+                    <div class="flex flex-wrap gap-4 items-center">
+                        <div class="flex items-center space-x-2">
+                            <label class="text-sm font-medium text-gray-700">Source:</label>
+                            <select id="sourceFilter" onchange="applyFilters()" class="border border-gray-300 rounded-md px-3 py-1 text-sm bg-white bg-opacity-80 backdrop-blur-sm">
+                                <option value="">All Sources</option>
+                                <option value="Support">Support</option>
+                                <option value="GitHub">GitHub</option>
+                                <option value="Discord">Discord</option>
+                                <option value="Twitter">Twitter</option>
+                                <option value="Email">Email</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <label class="text-sm font-medium text-gray-700">Sentiment:</label>
+                            <select id="sentimentFilter" onchange="applyFilters()" class="border border-gray-300 rounded-md px-3 py-1 text-sm bg-white bg-opacity-80 backdrop-blur-sm">
+                                <option value="">All Sentiments</option>
+                                <option value="Positive">Positive</option>
+                                <option value="Neutral">Neutral</option>
+                                <option value="Negative">Negative</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <label class="text-sm font-medium text-gray-700">Theme:</label>
+                            <select id="themeFilter" onchange="applyFilters()" class="border border-gray-300 rounded-md px-3 py-1 text-sm bg-white bg-opacity-80 backdrop-blur-sm">
+                                <option value="">All Themes</option>
+                            </select>
+                        </div>
+                        <button onclick="clearFilters()" class="text-sm text-white bg-gradient-to-r from-red-500 to-pink-500 px-3 py-1 rounded-md hover:from-red-600 hover:to-pink-600 transition-all duration-200 shadow-md hover:shadow-lg">Clear Filters</button>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <label class="text-sm font-medium text-gray-700">Sentiment:</label>
-                        <select id="sentimentFilter" onchange="applyFilters()" class="border border-gray-300 rounded-md px-3 py-1 text-sm">
-                            <option value="">All Sentiments</option>
-                            <option value="Positive">Positive</option>
-                            <option value="Neutral">Neutral</option>
-                            <option value="Negative">Negative</option>
-                        </select>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <label class="text-sm font-medium text-gray-700">Theme:</label>
-                        <select id="themeFilter" onchange="applyFilters()" class="border border-gray-300 rounded-md px-3 py-1 text-sm">
-                            <option value="">All Themes</option>
-                        </select>
-                    </div>
-                    <button onclick="clearFilters()" class="text-sm text-gray-500 hover:text-gray-700">Clear Filters</button>
                 </div>
             </div>
 
             <!-- Insights Dashboard -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                 <!-- Top Themes -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i data-lucide="trending-up" class="w-5 h-5 mr-2 text-blue-600"></i>
+                <div class="bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-lg shadow-lg p-6 insight-card">
+                    <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                        <i data-lucide="trending-up" class="w-5 h-5 mr-2 text-white"></i>
                         Top 5 Themes
                     </h3>
                     <div id="topThemes" class="space-y-3">
@@ -140,9 +359,9 @@
                 </div>
 
                 <!-- Urgent Feedback -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i data-lucide="alert-triangle" class="w-5 h-5 mr-2 text-red-600"></i>
+                <div class="bg-gradient-to-br from-red-400 via-red-500 to-red-600 rounded-lg shadow-lg p-6 insight-card">
+                    <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                        <i data-lucide="alert-triangle" class="w-5 h-5 mr-2 text-white"></i>
                         Most Urgent This Week
                     </h3>
                     <div id="urgentFeedback" class="space-y-3">
@@ -151,9 +370,9 @@
                 </div>
 
                 <!-- Negative Sentiment Hotspots -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i data-lucide="frown" class="w-5 h-5 mr-2 text-orange-600"></i>
+                <div class="bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 rounded-lg shadow-lg p-6 insight-card">
+                    <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                        <i data-lucide="frown" class="w-5 h-5 mr-2 text-white"></i>
                         Negative Sentiment by Source
                     </h3>
                     <div id="sentimentHotspots" class="space-y-3">
@@ -169,52 +388,69 @@
                         <i data-lucide="lightbulb" class="w-6 h-6 mr-2"></i>
                         What Should We Work On Next?
                     </h3>
-                    <button onclick="showDeliveryModal()" class="neon-glow relative bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-6 py-3 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
-                        <div class="relative flex items-center space-x-2">
-                            <i data-lucide="send" class="w-4 h-4"></i>
-                            <span>Send Summary</span>
-                        </div>
-                    </button>
+                    <div class="flex justify-end">
+                        <button onclick="showDeliveryModal()" class="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="send" class="w-4 h-4"></i>
+                                <span>Send Summary</span>
+                            </div>
+                        </button>
+                    </div>
                 </div>
                 <div id="recommendations" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <!-- Will be populated by JavaScript -->
                 </div>
             </div>
 
+            <!-- Feedback Grid View -->
+            <div class="bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 rounded-lg shadow-lg p-6 mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i data-lucide="grid-3x3" class="w-5 h-5 mr-2 text-purple-600"></i>
+                    Feedback Grid View
+                </h3>
+                <div id="feedbackGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
             <!-- Feedback List -->
-            <div class="bg-white bg-opacity-50 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200 border-opacity-30">
-                <div class="px-6 py-4 border-b border-gray-200 border-opacity-30 flex justify-between items-center bg-white bg-opacity-30 backdrop-blur-sm rounded-t-lg">
-                    <h3 class="text-lg font-semibold text-gray-900">All Feedback</h3>
-                    <div class="flex items-center space-x-4">
-                        <span class="text-sm text-gray-600">
-                            Showing <span id="showingStart">1</span>-<span id="showingEnd">10</span> of <span id="totalItems">0</span>
-                        </span>
-                        <select id="itemsPerPage" onchange="updatePagination()" class="border border-gray-300 border-opacity-50 bg-white bg-opacity-70 backdrop-blur-sm rounded-md px-3 py-1 text-sm">
-                            <option value="5">5 per page</option>
-                            <option value="10" selected>10 per page</option>
-                            <option value="20">20 per page</option>
-                            <option value="50">50 per page</option>
-                        </select>
+            <div class="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-lg shadow-lg p-6 mb-8">
+                <div class="bg-white bg-opacity-80 backdrop-blur-sm rounded-lg p-4 mb-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-900">All Feedback</h3>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm text-gray-600">
+                                Showing <span id="showingStart">1</span>-<span id="showingEnd">10</span> of <span id="totalItems">0</span>
+                            </span>
+                            <select id="itemsPerPage" onchange="updatePagination()" class="border border-gray-300 border-opacity-50 bg-white bg-opacity-70 backdrop-blur-sm rounded-md px-3 py-1 text-sm">
+                                <option value="5">5 per page</option>
+                                <option value="10" selected>10 per page</option>
+                                <option value="20">20 per page</option>
+                                <option value="50">50 per page</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
-                <div id="feedbackList" class="divide-y divide-gray-200 divide-opacity-30">
+                <div id="feedbackList" class="space-y-3">
                     <!-- Will be populated by JavaScript -->
                 </div>
                 <!-- Pagination Controls -->
-                <div id="paginationControls" class="px-6 py-4 border-t border-gray-200 border-opacity-30 flex justify-between items-center bg-white bg-opacity-30 backdrop-blur-sm rounded-b-lg">
-                    <div class="flex space-x-2">
-                        <button id="prevPage" onclick="changePage(-1)" class="page-btn px-3 py-1 border border-gray-300 border-opacity-50 bg-white bg-opacity-70 backdrop-blur-sm rounded-md text-sm hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">
-                            Previous
-                        </button>
-                        <div id="pageNumbers" class="flex space-x-1">
-                            <!-- Page numbers will be populated by JavaScript -->
+                <div class="bg-white bg-opacity-80 backdrop-blur-sm rounded-lg p-4 mt-4">
+                    <div id="paginationControls" class="flex justify-between items-center">
+                        <div class="flex space-x-2">
+                            <button id="prevPage" onclick="changePage(-1)" class="page-btn px-3 py-1 border border-gray-300 border-opacity-50 bg-white bg-opacity-70 backdrop-blur-sm rounded-md text-sm hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">
+                                Previous
+                            </button>
+                            <div id="pageNumbers" class="flex space-x-1">
+                                <!-- Page numbers will be populated by JavaScript -->
+                            </div>
+                            <button id="nextPage" onclick="changePage(1)" class="page-btn px-3 py-1 border border-gray-300 border-opacity-50 bg-white bg-opacity-70 backdrop-blur-sm rounded-md text-sm hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">
+                                Next
+                            </button>
                         </div>
-                        <button id="nextPage" onclick="changePage(1)" class="page-btn px-3 py-1 border border-gray-300 border-opacity-50 bg-white bg-opacity-70 backdrop-blur-sm rounded-md text-sm hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">
-                            Next
-                        </button>
-                    </div>
-                    <div class="text-sm text-gray-600">
-                        Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+                        <div class="text-sm text-gray-600">
+                            Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+                        </div>
                     </div>
                 </div>
             </div>
