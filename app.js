@@ -122,8 +122,34 @@ let itemsPerPage = 10;
 let sentimentTrendChart = null;
 let themeDistributionChart = null;
 
-// Initialize app
+// Dark Mode Toggle
+function toggleDarkMode() {
+    const body = document.body;
+    const icon = document.getElementById('darkModeIcon');
+    
+    if (body.classList.contains('dark')) {
+        body.classList.remove('dark');
+        icon.setAttribute('data-lucide', 'moon');
+        localStorage.setItem('darkMode', 'false');
+    } else {
+        body.classList.add('dark');
+        icon.setAttribute('data-lucide', 'sun');
+        localStorage.setItem('darkMode', 'true');
+    }
+    
+    // Re-initialize Lucide icons
+    lucide.createIcons();
+}
+
+// Check for saved dark mode preference
 document.addEventListener('DOMContentLoaded', function() {
+    const darkMode = localStorage.getItem('darkMode');
+    if (darkMode === 'true') {
+        document.body.classList.add('dark');
+        document.getElementById('darkModeIcon').setAttribute('data-lucide', 'sun');
+    }
+    
+    // Initialize Lucide icons
     lucide.createIcons();
     loadMockData();
     updateDashboard();
